@@ -1,11 +1,12 @@
 import pygame as pg
-from numpy import cos, linspace, meshgrid,sin,pi
+from numpy import cos, linspace, meshgrid, sin, pi, zeros
 import os
 import matplotlib.pyplot as plt
+import sys
 
 
+w02 = 10/200
 
-w02 = 10
 def AP1(theta1,theta2,phi1,phi2):
     diff = theta1-theta2
     return (-w02*3*sin(theta1)-w02*sin(theta1-2*theta2)-2*sin(diff)*(phi2*phi2+phi1*phi1*cos(diff)))/(3-cos(2*diff))
@@ -14,7 +15,10 @@ def AP2(theta1,theta2,phi1,phi2):
     diff = theta1-theta2
     return (2*sin(diff)*(phi1*phi1*2+2*w02*cos(theta1)+phi2*phi2*cos(diff)))/(3-cos(2*diff))
 
-def load_image(image, scale=1):
+
+
+
+def load_image(image, scale=2):
     fullname = os.path.join("./", image)
     image = pg.image.load(fullname)
 
@@ -26,10 +30,10 @@ def load_image(image, scale=1):
     return image
  
 
+class DoublePendulum:
+    """
 
-
-class Pendulum:
-
+    """
     def __init__(self,K11,K22,theta1,theta2,color="#000000"):
         self.mass = 1000
         self.length = 200
@@ -39,7 +43,7 @@ class Pendulum:
         self.phi2 = 0
         self.K11 = K11
         self.K22 = K22
-        self.h = 0.0250
+        self.h = 0.080
         self.origin = (650,200)
         self.image = load_image("bitmap.png")
         self.color = color
@@ -89,13 +93,51 @@ class Pendulum:
 
 
 class Simulation:
+    """
 
+    """
     def __init__(self,AP1,AP2):
         pg.init()
-        self.window = pg.display.set_mode((1300,730))
-        self.pendulum1 = Pendulum(AP1,AP2,0,1,"#000000")
-        # self.pendulum2 = Pendulum(AP1,AP2,0,1.00001,"#333333")
+        self.window = pg.display.set_mode((1300,730),pg.RESIZABLE)
+        self.pendulum1 = DoublePendulum(AP1,AP2,0,pi+0.1,"#000000")
+        self.pendulum2 = DoublePendulum(AP1,AP2,0,pi+0.10001,"#333333")
         self.bg = "#ffffff"
+        self.fg = "#000000"
+        self.ff = pg.font.Font("Lato-BoldItalic.ttf",32)
+
+    def menu(self):
+        run = True
+        clock = pg.time.Clock()
+        
+        
+        while run:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    run = False
+                    break
+
+            clock.tick(60)
+            self.window.fill(self.bg)
+            size= self.window.get_size()
+                
+            # title
+            menu_title = self.ff.render("MENU",True,self.bg,self.fg)
+            menu_title_size = menu_title.get_size()
+            menu_title_rect = pg.draw.rect(self.window,self.fg,(size[0]//2-menu_title_size[0],10,menu_title_size[0]+200,menu_title_size[1]+10),border_radius=10)
+                
+            self.window.blit(menu_title,(menu_title_rect.x+100,menu_title_rect.y+5))
+
+            # option:1
+            option1_title = self.ff.render("length1: ",True,self.bg,self.fg)
+            option1_title_rect = pg.draw.rect(self.window,self.fg,(size[0]//4,10,200,50),border_radius=5)
+            self.window.blit(option1_title,option1_title_rect)
+            
+            pg.display.flip()
+                
+
+        pg.quit()
+        sys.exit()
+                
     def run(self):
         run = True
         clock = pg.time.Clock()
@@ -111,38 +153,66 @@ class Simulation:
             self.window.fill(self.bg)
 
             self.pendulum1.draw(self.window)
-            # self.pendulum2.draw(self.window)
+            self.pendulum2.draw(self.window)
 
             pg.display.flip()
             self.pendulum1.update()
-            # self.pendulum2.update()
+            self.pendulum2.update()
         pg.quit()
 
 
-class Graphs:
-
-    def __init__(self):
-        self.theta1 = linspace(-2,2,2000)
-        self.theta2 = linspace(-2,2,2000)
-        self.phi1 = linspace(-6,6,2000)
-        self.phi2 = linspace(-6,6,2000)
-        
-        
+class Graphs(DoublePendulum):
+    """
     
-    def streamlines(self,ap):
+    """
+    def __init__(self,ap1,ap2):
+        self.theta1 = 0
+        self.theta2 = pi+0.1
+        self.phi1 = 0
+        self.phi2 = 0
+        super().__init__(ap1,ap2,self.theta1,self.theta2)
+    def streamlines(self):
         x1,x2 = meshgrid(self.theta1,self.phi1)
         x1_,x2_ = meshgrid(self.theta2,self.theta2)
-        v = ap(x1,x1_,x1,x2_)
+        v = self.K11(x1,x1_,x1,x2_)
         plt.figure()
         plt.streamplot(x1,x2,x1,v, color='k', linewidth=0.8,density=1.5, minlength=0.01, arrowsize=0.8,arrowstyle="->")
         plt.title("stream plot of approximated equation")
         plt.xlabel("$\theta$")
         plt.ylabel("$\phi$")
         plt.show()
+    def phivstheta(self,datapoints):
+        self.h = 0.01
+        data = zeros([datapoints])
+        time = 0
+        x = zeros([10000])
+        for i in range(datapoints):
+            data[i]=self.phi1
+            x[i] = time
+            time+=self.h
+            self.update()
+        plt.plot(x,data)
+        plt.show()
         
-    
+    def energyvstheta(self,datapoints):
+        self.h = 0.01
+        data = zeros([datapoints])
+        time = 0
+        x = zeros([datapoints])
+        for i in range(datapoints):
+            data[i]= (0.5*self.mass*self.length*self.length*(self.phi1*self.phi1+self.phi2*self.phi2+self.phi1*self.phi2*cos(self.theta1-self.theta2)))+(self.mass*10*self.length*(cos(self.theta1)*2+cos(self.theta2)))
+            x[i] = time
+            time+=self.h
+            self.update()
+        plt.plot(x,data)
+        plt.show()
+        
+        
 
         
 if __name__=='__main__':
+    # graph = Graphs(AP1,AP2)
+    # graph.energyvstheta(10000)
     sim = Simulation(AP1,AP2)
-    sim.run()
+    sim.menu()
+    
