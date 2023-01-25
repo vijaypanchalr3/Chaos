@@ -7,15 +7,6 @@ import sys
 
 w02 = 10/200
 
-def AP1(theta1,theta2,phi1,phi2):
-    diff = theta1-theta2
-    return (-w02*3*sin(theta1)-w02*sin(theta1-2*theta2)-2*sin(diff)*(phi2*phi2+phi1*phi1*cos(diff)))/(3-cos(2*diff))
-
-def AP2(theta1,theta2,phi1,phi2):
-    diff = theta1-theta2
-    return (2*sin(diff)*(phi1*phi1*2+2*w02*cos(theta1)+phi2*phi2*cos(diff)))/(3-cos(2*diff))
-
-
 
 
 def load_image(image, scale=2):
@@ -34,19 +25,26 @@ class DoublePendulum:
     """
 
     """
-    def __init__(self,K11,K22,theta1,theta2,color="#000000"):
+    def __init__(self,theta1,theta2,phi1,phi2,color="#000000"):
         self.mass = 1000
         self.length = 200
         self.theta1 = theta1
         self.theta2 = theta2
-        self.phi1 = 0
-        self.phi2 = 0
-        self.K11 = K11
-        self.K22 = K22
+        self.phi1 = phi1
+        self.phi2 = phi2
         self.h = 0.080
         self.origin = (650,200)
         self.image = load_image("bitmap.png")
         self.color = color
+
+    def oxillary1(self,theta1,theta2,phi1,phi2):
+        diff = theta1-theta2
+        return (-w02*3*sin(theta1)-w02*sin(theta1-2*theta2)-2*sin(diff)*(phi2*phi2+phi1*phi1*cos(diff)))/(3-cos(2*diff))
+
+    def oxillary2(self,theta1,theta2,phi1,phi2):
+        diff = theta1-theta2
+        return (2*sin(diff)*(phi1*phi1*2+2*w02*cos(theta1)+phi2*phi2*cos(diff)))/(3-cos(2*diff))
+
 
     def update(self):
         """
@@ -55,20 +53,20 @@ class DoublePendulum:
         """
         k11 = self.h*self.phi1
         k12 = self.h*self.phi2
-        l11 = self.h*self.K11(self.theta1,self.theta2,self.phi1,self.phi2)
-        l12 = self.h*self.K22(self.theta1,self.theta2,self.phi1,self.phi2)
+        l11 = self.h*self.oxillary1(self.theta1,self.theta2,self.phi1,self.phi2)
+        l12 = self.h*self.oxillary2(self.theta1,self.theta2,self.phi1,self.phi2)
         k21 = self.h*(self.phi1+(l11*0.5))
         k22 = self.h*(self.phi2+(l12*0.5))
-        l21 = self.h*self.K11(self.theta1+(k11*0.5),self.theta2+(k12*0.5),self.phi1+(l11*0.5),self.phi2+(l12*0.5))
-        l22 = self.h*self.K22(self.theta1+(k11*0.5),self.theta2+(k12*0.5),self.phi1+(l11*0.5),self.phi2+(l12*0.5))
+        l21 = self.h*self.oxillary1(self.theta1+(k11*0.5),self.theta2+(k12*0.5),self.phi1+(l11*0.5),self.phi2+(l12*0.5))
+        l22 = self.h*self.oxillary2(self.theta1+(k11*0.5),self.theta2+(k12*0.5),self.phi1+(l11*0.5),self.phi2+(l12*0.5))
         k31 = self.h*(self.phi1+(l21*0.5))
         k32 = self.h*(self.phi2+(l22*0.5))
-        l31 = self.h*self.K11(self.theta1+(k21*0.5),self.theta2+(k22*0.5),self.phi1+(l21*0.5),self.phi2+(l22*0.5))
-        l32 = self.h*self.K22(self.theta1+(k21*0.5),self.theta2+(k22*0.5),self.phi1+(l21*0.5),self.phi2+(l22*0.5))
+        l31 = self.h*self.oxillary1(self.theta1+(k21*0.5),self.theta2+(k22*0.5),self.phi1+(l21*0.5),self.phi2+(l22*0.5))
+        l32 = self.h*self.oxillary2(self.theta1+(k21*0.5),self.theta2+(k22*0.5),self.phi1+(l21*0.5),self.phi2+(l22*0.5))
         k41 = self.h*(self.phi1+l31)
         k42 = self.h*(self.phi2+l32)
-        l41 = self.h*self.K11(self.theta1+k31,self.theta2+k32,self.phi1+l31,self.phi2+l32)
-        l42 = self.h*self.K22(self.theta1+k31,self.theta2+k32,self.phi1+l31,self.phi2+l32)
+        l41 = self.h*self.oxillary1(self.theta1+k31,self.theta2+k32,self.phi1+l31,self.phi2+l32)
+        l42 = self.h*self.oxillary2(self.theta1+k31,self.theta2+k32,self.phi1+l31,self.phi2+l32)
         k_1 = (1/6)*(k11+k41+2*(k21+k31))
         k_2 = (1/6)*(k21+k42+2*(k22+k32))
         l_1 = (1/6)*(l11+l41+2*(l21+l31))
@@ -90,17 +88,36 @@ class DoublePendulum:
         window.blit(self.image,(x1,y1))
         window.blit(self.image,(x2,y2))
 
+class TriplePendulum:
 
+    def __init__(self):
+        self.length = 200
+
+    def oxillary1(self,t1,t2,t3,p1,p2,p3):
+        return 0
+
+    def oxillary2(self,t1,t2,t3,p1,p2,p3):
+        return 0
+
+    def oxillary3(self,t1,t2,t3,p1,p2,p3):
+        return 0
+
+    def update(self):
+        pass
+
+    def draw(self):
+        pass
+        
 
 class Simulation:
     """
 
     """
-    def __init__(self,AP1,AP2):
+    def __init__(self):
         pg.init()
         self.window = pg.display.set_mode((1300,730),pg.RESIZABLE)
-        self.pendulum1 = DoublePendulum(AP1,AP2,0,pi+0.1,"#000000")
-        self.pendulum2 = DoublePendulum(AP1,AP2,0,pi+0.10001,"#333333")
+        self.pendulum1 = DoublePendulum(0,pi+0.1,0,2,"#000000")
+        self.pendulum2 = DoublePendulum(0,pi+0.10001,0,2,"#333333")
         self.bg = "#ffffff"
         self.fg = "#000000"
         self.ff = pg.font.Font("Lato-BoldItalic.ttf",32)
@@ -174,7 +191,7 @@ class Graphs(DoublePendulum):
     def streamlines(self):
         x1,x2 = meshgrid(self.theta1,self.phi1)
         x1_,x2_ = meshgrid(self.theta2,self.theta2)
-        v = self.K11(x1,x1_,x1,x2_)
+        v = self.oxillary1(x1,x1_,x1,x2_)
         plt.figure()
         plt.streamplot(x1,x2,x1,v, color='k', linewidth=0.8,density=1.5, minlength=0.01, arrowsize=0.8,arrowstyle="->")
         plt.title("stream plot of approximated equation")
@@ -213,6 +230,6 @@ class Graphs(DoublePendulum):
 if __name__=='__main__':
     # graph = Graphs(AP1,AP2)
     # graph.energyvstheta(10000)
-    sim = Simulation(AP1,AP2)
-    sim.menu()
+    sim = Simulation()
+    sim.run()
     
